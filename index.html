@@ -1,0 +1,118 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Chat</title>
+</head>
+<body>
+    <h1>Chat HTTP</h1>
+    <div id="messages"></div>
+    <form id="chatForm">
+        <input type="text" id="username" placeholder="Your name" required>
+        <input type="text" id="message" placeholder="Your message" required>
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        const API_URL = "http://localhost:3000";
+        const messagesDiv = document.getElementById("messages");
+        const chatForm = document.getElementById("chatForm");
+
+        // Fonction pour récupérer les messages
+        async function fetchMessages() {
+            const response = await fetch(`${API_URL}/getMessages`);
+            const messages = await response.json();
+            //Le temp que le client recois le message
+            const time_mant = new Date().toLocaleTimeString();
+            var from=messages[messages.length-1].from;
+            var message=messages[messages.length-1].message;
+            var time=messages[messages.length-1].time;
+            var timerec=time_mant;
+            console.log(messages)
+
+            await fetch(`${API_URL}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ from, message, time, timerec })
+            });
+           
+            //affichage de message
+            
+            messagesDiv.innerHTML = messages.map(msg =>{
+                if(msg.timerec!=null){
+                     return `<p><strong>${msg.from}:</strong> ${msg.message}</p> <p><em>temps d'envoi le message :(${msg.time})</em><em>temps de recois le message (${msg.timerec})</em></p> `
+                }}
+               
+            ).join("");
+        }
+
+        // Récupérer les messages toutes les 5 secondes (Polling)
+        setInterval(fetchMessages, 5000);
+
+        // Envoyer un message
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const from = document.getElementById("username").value;
+            const message = document.getElementById("message").value;
+            //le temps d'evoie message
+            const time = new Date().toLocaleTimeString();
+            const timerec=null;
+
+            await fetch(`${API_URL}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ from, message, time, timerec })
+            });
+            //Rénesialiser la valeur de message 
+            document.getElementById("message").value = "";
+        });
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+</head>
+<body>
+    <h1>Chat WebSocket</h1>
+    <div id="messages"></div>
+    <form id="chatForm">
+        <input type="text" id="username" placeholder="Your name" required>
+        <input type="text" id="message" placeholder="Your message" required>
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        //connexion avec notre serveur
+        const ws = new WebSocket("ws://localhost:3001");
+        const messagesDiv = document.getElementById("messages");
+        const chatForm = document.getElementById("chatForm");
+
+        // Afficher les messages reçus
+        ws.onmessage = (event) => {
+            const { from, message, time } = JSON.parse(event.data);
+            const time_mnt = new Date().toLocaleTimeString();
+            const newMessage = `<p><strong>${from}:</strong> ${message}</p> <p><em>temps d'envoi le message :(${time})</em><em>temps de recois le message (${time_mnt})</em></p>`;
+            messagesDiv.innerHTML += newMessage;
+        };
+
+        // Envoyer un message
+        chatForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const from = document.getElementById("username").value;
+            const message = document.getElementById("message").value;
+            const time = new Date().toLocaleTimeString();
+
+            ws.send(JSON.stringify({ from, message, time }));
+            document.getElementById("message").value = "";
+        });
+    </script>
+</body>
+</html>
+
